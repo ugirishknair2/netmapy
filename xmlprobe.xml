@@ -1,0 +1,86 @@
+<!--
+        Python Command line probe communicating with xml_agent in Cisco devices.
+
+Based on:
+        Command Line Python Sample (com.dartware.python.sample.txt)
+        Custom Probe for InterMapper (http://www.intermapper.com)
+        Please feel free to use it as a base for further development.
+
+Reference:	http://download.intermapper.com/docs/DevGuide/
+
+Installation:	Files expected to be installed to corresponding folders on InterMapper server
+		under folder "/cygdrive/e/Program Files (x86)/InterMapper/InterMapper Settings/Tools":
+	./
+		xmlprobe.xml
+		xmlget.py
+		xmlagent-conf-dist.json
+	./cisco/
+		__init__.py
+		HttpXmlAgent.py
+
+	After the files are installed, the probe (xmlprobe.xml) may be deployed in InterMapper.
+	The first deployment will create a file xmlprobe.py in the sub-folder
+	"edu.umich.med.custom.CiscoAce.Count.of.show.xlate.global".
+-->
+<header>
+        type="cmd-line"
+        package="edu.umich.med.custom"
+        probe_name="CiscoAce.Count.of.show.xlate.global"
+        human_name="Cisco Ace - Count of show xlate global"
+        version="0.1"
+        address_type="IP"
+        display_name = "UMHS/Cisco/ACE/Count_of_show_xlate_global"
+	poll_interval = "300"
+</header>
+<description>
+        \GB\Python Command-Line Probe for Cisco XML Agent\p\
+        A command line probe which executes a Python script, which remotely
+	runs a command by calling the xml_agent process on a Cisco device.
+	This XML RPC is excuted over HTTP/S.
+
+	This probe consists of multiple files, in Python and JSON.
+
+	Run "python xmlget.py --help" for more details.
+</description>
+<parameters>
+	command =	"show xlate global %(vip)s | count"
+	context =	"<context-name>"
+	vip =		"<vip:virtual-IP-address>"
+</parameters>
+<command-line>
+        path=""
+        cmd="${PYTHON}"
+        arg="xmlprobe.py -c ../xmlagent-conf.json host='${address}' command='${command}' context='${context}' vip='${vip}' -x 1"
+	timeout=10
+</command-line>
+<command-exit>
+	down:${EXIT_CODE}=4
+	critical:${EXIT_CODE}=3
+        alarm:${EXIT_CODE}=2
+        warning:${EXIT_CODE}=1
+        okay:${EXIT_CODE}=0
+</command-exit>
+<command-display>
+	\B5\XML Probe Information\0P\
+	Output of ($cmd) is $result
+</command-display>
+<autorecord>
+	$result, 'xlatecount', "Xlate Count"
+</autorecord>
+<tool:xmlprobe.py>
+##
+## $Id: xmlprobe.xml,v 1.2 2012/02/06 20:05:58 weiwang Exp $
+##
+
+import os, sys
+
+if not os.path.isfile('../xmlget.py'):
+    print '{reason:="Current folder: %s"}' % os.path.realpath(os.curdir)
+    sys.exit(-1)
+
+sys.path.append('..')
+
+from xmlget import XMLget
+
+sys.exit(XMLget(sys.argv)())
+</tool:xmlprobe.py>

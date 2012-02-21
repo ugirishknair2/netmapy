@@ -25,21 +25,22 @@ class InterMapper:
 
     Tests:
 
-    >>> im = InterMapper('./intermapper-test.json')
+    >>> im = InterMapper('./intermapper-conf-dist.json')
     >>> if im.CONF['host'] == 'localhost':
     ...     print "Yes!"
     ... else:
     ...     print json.dumps(im.CONF, sort_keys=True, indent=4)
     Yes!
 
+    >>> #   For the tests below to pass, a working "./intermapper-conf.json" file is required.
     >>> from pprint import pprint
     >>> im = InterMapper()
     >>> def print_row(r, rs): pprint(r)
-    >>> im.connect().run("select map_id, name, path from map where name = 'Test'", (), print_row)
-    (7, 'Test', '/Test')
+    >>> im.connect().run("select name, path from map where name = 'Test'", (), print_row)
+    ('Test', '/Test')
     []
-    >>> im.connect().run("select map_id, name, path from map where name = %s", ('Test',), print_row)
-    (7, 'Test', '/Test')
+    >>> im.connect().run("select name, path from map where name = %s", ('Test',), print_row)
+    ('Test', '/Test')
     []
     >>> im.map2path('Test')
     '/Test'
@@ -68,6 +69,10 @@ class InterMapper:
         self.cur = self.db.cursor()
         return self
 
+    def devices(self, map):
+        print("%d : %d" % (map[0], map[1]))
+	self.run("SELECT DISTINCT device_id, name, ip FROM device where server_id = %d AND map_id = %d", (int(map[0]), int(map[1]),))
+
     def run(self, sql, data=(), afn=lambda r, rs: rs.append(r)):
         self.cur.execute(sql, data)
         rows = []
@@ -81,14 +86,33 @@ class InterMapper:
         row = self.run("select path from map where name = %s", (name,))
         return row[0][0] if len(row) == 1 else None
 
+    def maps(self, name=()):
+        """
+        Produce a list of maps.
+        """
+        if name == ():
+            names = ''
+            where = ''
+        else:
+            names = '%('+'|'.join(name)+')%'
+            where = ' WHERE name SIMILAR TO %s'
+        return self.run("SELECT name, path, enabled, create_time, delete_time FROM map"+where+" ORDER BY path", (names,))
+
     def notifier(self, name):
         return self.run("select * from notifier where name = %s", (name,))
 
+    def path2map(self, path=None):
+        maps = []
+        where = ' WHERE path = %s' if path else ''
+        for row in self.run("SELECT DISTINCT server_id, map_id, name, path FROM map"+where+" ORDER BY path", (path,)):
+            maps.append(row)
+        return maps
+
     def rule(self, anotifier, mapid=None, devid=None):
-        sql = "SELECT * FROM notifierrule WHERE server_id=%d AND notifier_id=%d" % anotifier[0:2]
-        if mapid != None: sql += " AND map_id=%d" % mapid
-        if devid != None: sql != " AND device_id=%d" % devid
-        return self.run(sql)
+        sql = "SELECT * FROM notifierrule WHERE server_id=%d AND notifier_id=%d"
+        if mapid != None: sql += " AND map_id=%d"
+        if devid != None: sql += " AND device_id=%d"
+        return self.run(sql, (anotifier[0:2], mapid, devid,))
 
 
 class Notifier:

@@ -50,7 +50,7 @@ Installation:	Files expected to be installed to corresponding folders on InterMa
 <command-line>
         path=""
         cmd="${PYTHON}"
-        arg="xmlprobe.py -c ../xmlagent-conf.json host='${address}' command='${command}' context='${context}' vip='${vip}' -x 1"
+        arg=xmlprobe.py -c ../xmlagent-conf.json "host=${address}" "command=${command}" "context=${context}" "vip=${vip}"
 	timeout=10
 </command-line>
 <command-exit>
@@ -62,7 +62,9 @@ Installation:	Files expected to be installed to corresponding folders on InterMa
 </command-exit>
 <command-display>
 	\B5\XML Probe Information\0P\
-	Output of ($cmd) is $result
+	\4\        VIP:\0\ $vip
+	\4\    Context:\0\ $context
+	\4\      Count:\0\ $result
 </command-display>
 <autorecord>
 	$result, 'xlatecount', "Xlate Count"

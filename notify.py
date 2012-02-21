@@ -21,12 +21,7 @@
 ##      A Python script to send a text message via a Notifier object.
 
 
-import getopt
-import json
-import os
-import re
-import sys
-import time
+import getopt, json, os, re, sys, time
 
 def_conf = './notify-conf.json'
 
@@ -48,6 +43,7 @@ def usage():
                                            Default is "%s"
               -d | --debug                 Debug mode.
               -p | --path=<add-path>       Addition to the PYTHONPATH for Notifier modules.
+              -t | --test-config           Test the configuration only.
 
     A configuration file is a text file in the JSON format, used to be specify what parameters
     each notifier object uses.
@@ -56,17 +52,15 @@ def usage():
 
 
 try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], "hc:dp:", ["help", "config=", "debug", "path="])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], "hc:dp:t", ["help", "config=", "debug", "path=", "test-config"])
 except getopt.GetoptError, err:
     # print help information and exit:
     print str(err) # will print something like "option -a not recognized"
     usage()
     sys.exit(1)
-if len(args) < 1:
-    usage()
-    sys.exit(2)
 
 debug = False
+dryrun = False
 conf = def_conf
 for o, a in opts:
     if o in ("-h", "--help"):
@@ -78,8 +72,13 @@ for o, a in opts:
         debug = True
     elif o in ("-p", "--path"):
         sys.path += a.split(':')
+    elif o in ('-t', '--test-config'):
+        dryrun = True
     else:
         assert False, "unhandled option"
+if len(args) < 1 and not dryrun:
+    usage()
+    sys.exit(2)
 
 try:
     CONF = { 'notifier': [ 'Notifier' ], 'path': './notifier' }
@@ -95,14 +94,16 @@ for apath in CONF['path'].split(':'):
     if os.path.isdir(apath): sys.path.append(apath)
 from Notifier import Notifier
 
-recp = args[0]
+recp = '' if dryrun else args[0]
 msg = " ".join(args[1:])
-for klass in set(re.split('[\s,]+', CONF['notifier'])):
+for name in set(re.split('[\s,]+', CONF['notifier'])):
     try:
-        notifier = Notifier.new(klass, CONF[klass])
-        resp = notifier.notify(recp, msg)
+        cnf = CONF[name]
+        klass = cnf['class'] if 'class' in cnf else name
+        notifier = Notifier.new(klass, cnf)
+        resp = 'Test success' if dryrun else notifier.notify(recp, msg)
         if debug:
-            print("%s('%s', '%s') = %s\n" % (klass, recp, msg, resp))
+            print("%s('%s', '%s') = %s\n" % (name, recp, msg, resp))
     except Exception as ex:     #       Call all exceptions so that every configured notifier is visited.
         err = "%s %s = %s -- message = %s" % (time.strftime("%Y-%m-%dT%H:%M:%S"), ex.__class__.__name__, str(ex), msg)
         try:

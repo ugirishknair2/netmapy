@@ -37,15 +37,11 @@
 
 		"#":	"Optional, for producing a text output. If this section is present, then all",
 		"#":	"3 components must also be.",
-		"#":	"    error:     Text format for error output.",
 		"#":	"    format":	{reason:=\"%s\"} for Intermapper probe, %s default (for xmlget.py)",
-		"#":	"    success:   Text format for success message.",
 		"#":	"    status":   Assuming error status is -1, and so on.",
 		"#":	"    delimiter: Text for delimiting multiple 'result'.",
 		"output":
 		{
-			"error":	"Error: %s",
-			"success":	"%(status)s: %(count)d count of xlate global %(vip)s = %(result)s",
 			"status":	[ "Error", "Okay", "warning", "Alarm", "Down" ],
 			"format":	"{$status:=\"%(status)\", $cmd:=\"%(command)\", $result:=%(result) } %s",
 			"delimiter":	", "

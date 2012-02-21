@@ -57,7 +57,7 @@ class Notifier:
         return getattr(mod, klass)(conf)
 
     @abstractmethod
-    def notify(self, recp, msg):
+    def notify(self, recp, msg, opt={}):
         pass
 
     def split(self, msg):

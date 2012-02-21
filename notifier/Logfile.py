@@ -53,7 +53,7 @@ class Logfile(Notifier):
     def close(self):
         self.file.close()
 
-    def notify(self, recp, msg):
+    def notify(self, recp, msg, opt={}):
         fname = time.strftime(self.C['filename'])
         if fname != self.name:
             self.logger = logging.getLogger(fname)

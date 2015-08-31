@@ -1,0 +1,1 @@
+[InterMapper](http://InterMapper.com) is a map-oriented network management tool that provides an open API. This project is created to use that API, and hopefully more.
